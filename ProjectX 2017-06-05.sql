@@ -143,10 +143,38 @@ FROM (SELECT readerId, COUNT(*) AS cnt
       ) t;
 
 ----==================================4 funckje i procedury=======================================--
+CREATE PROCEDURE [GetNewsByWriter] @id int
+AS
+SELECT * 
+FROM News
+WHERE writerId = @id
+
+EXEC GetNewsByWriter 20
+GO
+
+CREATE PROCEDURE [GetCommentByNews] @id int
+AS
+SELECT * 
+FROM Comment c
+where c.newsId = @id
+
+EXEC [GetCommentByNews] 10
+GO
+
+CREATE PROCEDURE [GetAccountByWriter] @id int
+AS
+SELECT u.login, u.firstName, u. lastName, w.nickName 
+FROM UserTable u
+JOIN Writer w on w.userId = u.id
+Where w.id = @id
+
+EXEC [GetAccountByWriter] 10
+GO
 
 
 ----========================================5 indeksy=============================================--
 CREATE UNIQUE NONCLUSTERED INDEX UserTable_I_1 ON ProjectX.dbo.UserTable(login);
+CREATE NONCLUSTERED INDEX News_I_1 ON ProjectX.dbo.News(writerId);
 CREATE UNIQUE NONCLUSTERED INDEX Writer_I_1 ON ProjectX.dbo.Writer(userId);
 CREATE UNIQUE NONCLUSTERED INDEX Reader_I_1 ON ProjectX.dbo.Reader(userId);
 
