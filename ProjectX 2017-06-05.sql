@@ -142,6 +142,13 @@ FROM (SELECT readerId, COUNT(*) AS cnt
       GROUP BY readerId
       ) t;
 
+--Duplicate rows
+SELECT writerId, COUNT(writerId)
+FROM News
+GROUP BY writerId
+HAVING COUNT (writerId) > 1;
+
+
 ----==================================4 funckje i procedury=======================================--
 CREATE PROCEDURE [GetNewsByWriter] @id int
 AS
@@ -178,13 +185,36 @@ CREATE NONCLUSTERED INDEX News_I_1 ON ProjectX.dbo.News(writerId);
 CREATE UNIQUE NONCLUSTERED INDEX Writer_I_1 ON ProjectX.dbo.Writer(userId);
 CREATE UNIQUE NONCLUSTERED INDEX Reader_I_1 ON ProjectX.dbo.Reader(userId);
 
-----========================================6 widoki==============================================--
---use ProjectX;
---CREATE VIEW UserNews AS
---SELECT ut.login, w.nickName, n.CONTENT FROM News n
---LEFT JOIN Writer w on w.userId = n.writerId
---LEFT JOIN UserTable ut ON ut.id = w.userId; 
-
+----========================================6 widoki
+--widok nieindeksowany
+GO
+CREATE VIEW WriterInformation AS  
+SELECT 
+	u.firstName AS "Imie tworcy",
+	u.lastName AS "Nazwisko tworcy",
+	n.mainTitle AS "Tytul artykulu",
+	c.categoryName AS "Kategoria artykulu",
+	n.content AS "Tresc artykulu"
+	FROM UserTable u 
+	LEFT JOIN Writer w ON u.id = w.userId
+	LEFT JOIN News n ON n.writerId = w.id
+	LEFT JOIN Category c ON c.id = n.categoryId
+	WHERE n.content IS NOT NULL
+GO 
+--widok indeksowany
+CREATE VIEW ReaderInformationIndexed WITH SCHEMABINDING AS  
+SELECT 
+	u.firstName AS "Imie czytelnika",
+	u.lastName AS "Nazwisko czytelnika",
+	r.lastLoginDate AS "Ostatnia data logowania",
+	rr.rank AS "Ranga czytelnika",
+	(SELECT Count(id) FROM dbo.Comment ccc WHERE ccc.readerId = r.id) as "Ilosc komentarzy"
+	FROM dbo.UserTable u 
+	LEFT JOIN dbo.Reader r ON u.id = r.userId
+	LEFT JOIN dbo.ReaderRank rr on rr.readerId = r.id
+	LEFT JOIN dbo.Comment c on c.readerId = r.id
+	WHERE c.content IS NOT NULL;
+GO 
 
 
 
